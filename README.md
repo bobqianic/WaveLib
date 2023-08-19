@@ -1,9 +1,10 @@
 # WaveLib
 ### A simple audio library implemented in pure C++.
 ## Features
-- [ ] `LOAD` & `DUMP` audio (eg. `.wav` `.mp3`)
+- [ ] `LOAD` & `DUMP` audio (eg. `.wav` `.flac` `.mp3` `.aac` `.m4a`)
 - [x] Print audio info
-- [ ] Audio processing algo (eg. `WSOLA`)
+- [ ] Audio processing algo (eg. `OLA` `WSOLA` `PV` `HPTSM`)
+- [ ] Signal processing algo (eg. `STFT` `FFT` `Fast DCT`)
 
 ## Demo
 ```cpp

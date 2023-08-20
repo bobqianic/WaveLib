@@ -81,17 +81,51 @@ public:
     }
 #endif
 
-    static bool print_info(FORMAT::WAV& audio) {
-        if (audio.format == 1) {
-            std::cout << "Type of format: PCM" << std::endl;
-        } else {
-            std::cout << "Type of format: Unknown" << std::endl;
-        }
-        std::cout << "Number of Channels: " << audio.channels << std::endl;
-        std::cout << "Sample Rate: " << audio.sample_rate << std::endl;
-        std::cout << "Bit Depth: " << audio.sample_size << std::endl;
-        std::cout << "Data Rate: " << audio.data_rate << std::endl;
-        std::cout << "Data Size: " << audio.data_size << std::endl;
+    static bool print(FORMAT::WAV& audio) {
+        return OUTPUT::audio_info(audio);
+    }
+
+    static bool print(COMPLEX_VEC& vec) {
+        return OUTPUT::vector_info(vec);
+    }
+
+    static bool print(short value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(int value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(int64_t value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(unsigned short value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(unsigned int value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(uint64_t value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(float value) {
+        std::cout << value << std::endl;
+        return true;
+    }
+
+    static bool print(double value) {
+        std::cout << value << std::endl;
         return true;
     }
 
@@ -608,6 +642,31 @@ private:
             for (; i < (window_length + offset); i++) {
                 out[i].real(static_cast<float>(2.0 - (static_cast<float>(2.0 * i) / static_cast<float>(window_length + offset))));
             }
+            return true;
+        }
+    };
+
+    struct OUTPUT {
+        static bool audio_info(FORMAT::WAV& audio) {
+            if (audio.format == 1) {
+                std::cout << "Type of format: PCM" << std::endl;
+            } else {
+                std::cout << "Type of format: Unknown" << std::endl;
+            }
+            std::cout << "Number of Channels: " << audio.channels << std::endl;
+            std::cout << "Sample Rate: " << audio.sample_rate << std::endl;
+            std::cout << "Bit Depth: " << audio.sample_size << std::endl;
+            std::cout << "Data Rate: " << audio.data_rate << std::endl;
+            std::cout << "Data Size: " << audio.data_size << std::endl;
+            return true;
+        }
+
+        static bool vector_info(COMPLEX_VEC& vec) {
+            std::cout << "[";
+            for (int64_t i = 0; i < vec.size() - 1; i++) {
+                std::cout << vec[i] << ", ";
+            }
+            std::cout << vec[vec.size() - 1] << "]" << std::endl;
             return true;
         }
     };

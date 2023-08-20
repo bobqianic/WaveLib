@@ -9,10 +9,16 @@
 #include <fstream>
 #include <algorithm>
 #include <memory>
+#include <complex>
+#include <cmath>
 
 #if _WIN32
 #define NOMINMAX
 #include <windows.h>
+#endif
+
+#ifndef WAVLIB_PI
+#define WAVLIB_PI 3.1415927410125732
 #endif
 
 // Include guards
@@ -33,6 +39,8 @@ public:
         };
     };
 
+    typedef std::vector<std::complex<float>> COMPLEX_VEC;
+
     static bool LOAD(const std::string& filename, FORMAT::WAV& audio) {
         std::ifstream file(filename, std::ios::binary);
         bool result = LOAD::WAV(file, audio);
@@ -44,7 +52,7 @@ public:
 
 #if _WIN32
     static bool LOAD(const std::wstring& filename, FORMAT::WAV& audio) {
-        std::ifstream file(WINDOWS_ONLY::WStringToString(filename), std::ios::binary);
+        std::ifstream file(ONLY_WIN32::WStringToString(filename), std::ios::binary);
         bool result = LOAD::WAV(file, audio);
         if (file.is_open()) {
             file.close();
@@ -64,7 +72,7 @@ public:
 
 #if _WIN32
     static bool DUMP(const std::wstring& filename, FORMAT::WAV& audio) {
-        std::ofstream file(WINDOWS_ONLY::WStringToString(filename), std::ios::binary);
+        std::ofstream file(ONLY_WIN32::WStringToString(filename), std::ios::binary);
         bool result = DUMP::WAV(file, audio);
         if (file.is_open()) {
             file.close();
@@ -86,6 +94,35 @@ public:
         std::cout << "Data Size: " << audio.data_size << std::endl;
         return true;
     }
+
+    struct F {
+        static bool WSOLA(FORMAT::WAV& audio) {
+
+        }
+    };
+
+    struct W {
+        /** Window Functions **/
+        static bool Hann(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            return WINDOW::Hann(out, window_length, periodic);
+        }
+
+        static bool Hamming(COMPLEX_VEC& out, const int window_length, const bool periodic=true, const float alpha=0.54, const float beta=0.46) {
+            return WINDOW::Hamming(out, window_length, periodic, alpha, beta);
+        }
+
+        static bool Kaiser(COMPLEX_VEC& out, const int window_length, const bool periodic=true, const float beta=12.0) {
+            return WINDOW::Kaiser(out, window_length, periodic, beta);
+        }
+
+        static bool Blackman(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            return WINDOW::Blackman(out, window_length, periodic);
+        }
+
+        static bool Bartlett(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            return WINDOW::Bartlett(out, window_length, periodic);
+        }
+    };
 
 private:
     struct endian {
@@ -151,24 +188,24 @@ private:
             return *reinterpret_cast<const unsigned int*>(data);
         }
 
-        static long long char2LongLong(const char* data, const bool LittleEndian = true) {
+        static int64_t char2LongLong(const char* data, const bool LittleEndian = true) {
             if (endian::isLittleEndian() != LittleEndian) {
                 char buffer[8];
                 std::copy(data, data + 8, buffer);
                 endian::flipEndianness(buffer, 8);
-                return *reinterpret_cast<const long long*>(buffer);
+                return *reinterpret_cast<const int64_t*>(buffer);
             }
-            return *reinterpret_cast<const long long*>(data);
+            return *reinterpret_cast<const int64_t*>(data);
         }
 
-        static unsigned long long char2uLongLong(const char* data, const bool LittleEndian = true) {
+        static uint64_t char2uLongLong(const char* data, const bool LittleEndian = true) {
             if (endian::isLittleEndian() != LittleEndian) {
                 char buffer[8];
                 std::copy(data, data + 8, buffer);
                 endian::flipEndianness(buffer, 8);
-                return *reinterpret_cast<const unsigned long long*>(buffer);
+                return *reinterpret_cast<const uint64_t*>(buffer);
             }
-            return *reinterpret_cast<const unsigned long long*>(data);
+            return *reinterpret_cast<const uint64_t*>(data);
         }
     };
 
@@ -205,7 +242,7 @@ private:
             }
         }
 
-        static void longlong2Char(const long long& data, char* out, const bool LittleEndian = true) {
+        static void longlong2Char(const int64_t& data, char* out, const bool LittleEndian = true) {
             const char* p = reinterpret_cast<const char*>(&data);
             std::copy(p, p + 8, out);
             if (endian::isLittleEndian() != LittleEndian) {
@@ -213,7 +250,7 @@ private:
             }
         }
 
-        static void longlong2Char(const unsigned long long& data, char* out, const bool LittleEndian = true) {
+        static void longlong2Char(const uint64_t& data, char* out, const bool LittleEndian = true) {
             const char* p = reinterpret_cast<const char*>(&data);
             std::copy(p, p + 8, out);
             if (endian::isLittleEndian() != LittleEndian) {
@@ -223,12 +260,12 @@ private:
     };
 
     struct DATA {
-        static std::string read(std::ifstream& file, unsigned long long length) {
+        static std::string read(std::ifstream& file, uint64_t length) {
             if (!file.is_open()) {
                 return "";
             }
             std::string buffer(length, '\0'); // Preallocate the string with the given length
-            file.read(&buffer[0], static_cast<long long>(length));
+            file.read(&buffer[0], static_cast<int64_t>(length));
             return buffer;
         }
 
@@ -236,7 +273,7 @@ private:
             if (!file.is_open()) {
                 return false;
             }
-            file.write(data.c_str(), static_cast<long long>(data.size()));
+            file.write(data.c_str(), static_cast<int64_t>(data.size()));
             return true;
         }
 
@@ -280,7 +317,7 @@ private:
             return true;
         }
 
-        static bool write(std::ofstream& file, const long long& data) {
+        static bool write(std::ofstream& file, const int64_t& data) {
             if (!file.is_open()) {
                 return false;
             }
@@ -290,7 +327,7 @@ private:
             return true;
         }
 
-        static bool write(std::ofstream& file, const unsigned long long& data) {
+        static bool write(std::ofstream& file, const uint64_t& data) {
             if (!file.is_open()) {
                 return false;
             }
@@ -302,7 +339,7 @@ private:
     };
 
 #if _WIN32
-    struct WINDOWS_ONLY {
+    struct ONLY_WIN32 {
         static std::string WStringToString(const std::wstring& wstr){
             int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
             std::string strTo(sizeNeeded, 0);
@@ -367,8 +404,8 @@ private:
             audio.audio.reserve(audio.data_size / offset);
 
             // read file and convert char[] to vector<int> (supports 8 bits, 16 bits, 24 bits and 32 bits)
-            for (unsigned long long i = 0; i < audio.data_size; i += 1024 * 1024 * offset) {
-                unsigned int buffer_size = std::min(static_cast<unsigned long long>(1024 * 1024 * offset), static_cast<unsigned long long>(audio.data_size) - i);
+            for (uint64_t i = 0; i < audio.data_size; i += 1024 * 1024 * offset) {
+                unsigned int buffer_size = std::min(static_cast<uint64_t>(1024 * 1024 * offset), static_cast<uint64_t>(audio.data_size) - i);
                 file.read(audio_buffer_main.get(), buffer_size);
                 for (unsigned int j = 0; j < buffer_size; j += offset){
                     std::copy(audio_buffer_main.get() + j, audio_buffer_main.get() + j + offset, audio_buffer_slave.get());
@@ -434,16 +471,143 @@ private:
             std::unique_ptr<char[]> buffer_main(new char [1024 * 1024 * offset]);
             std::unique_ptr<char[]> buffer_slave(new char [4]);
 
-            for (unsigned long long i = 0; i < audio.audio.size(); i+= 1024 * 1024) {
-                for (unsigned long long j = i; j < std::min(i + static_cast<unsigned long long>(1024 * 1024), static_cast<unsigned long long>(audio.audio.size())); j++) {
+            for (uint64_t i = 0; i < audio.audio.size(); i+= 1024 * 1024) {
+                for (uint64_t j = i; j < std::min(i + static_cast<uint64_t>(1024 * 1024), static_cast<uint64_t>(audio.audio.size())); j++) {
                     character::int2Char(audio.audio[j], buffer_slave.get());
-                    for (unsigned long long k = 0; k < offset; k++) {
+                    for (uint64_t k = 0; k < offset; k++) {
                         buffer_main[(j - i) * offset + k] = buffer_slave[k];
                     }
                 }
-                file.write(buffer_main.get(), std::min(static_cast<unsigned long long>(1024 * 1024 * (audio.sample_size / 8)), (audio.audio.size() - i) * (audio.sample_size / 8)));
+                file.write(buffer_main.get(), std::min(static_cast<uint64_t>(1024 * 1024 * (audio.sample_size / 8)), (audio.audio.size() - i) * (audio.sample_size / 8)));
             }
 
+            return true;
+        }
+    };
+
+    struct SIGNAL {
+        static bool DFT(const COMPLEX_VEC& in, COMPLEX_VEC& out) {
+
+        }
+
+        static bool FFT(const COMPLEX_VEC& in, COMPLEX_VEC& out) {
+
+        }
+
+        static bool STFT() {
+            /** Please ensure the window is set to periodic **/
+
+        }
+    };
+
+    struct WINDOW {
+        static bool Hann(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            if (window_length < 1) {
+                return false;
+            }
+            if (out.size() < window_length) {
+                out.resize(window_length);
+            }
+            if (window_length == 1) {
+                out[out.size() - 1].real(1);
+                return true;
+            }
+            int offset = 0;
+            if (!periodic) {
+                offset = -1;
+            }
+            for (int i = 0; i < window_length; i++) {
+                out[i].real(static_cast<float>(0.5 * (1.0 - cosf(static_cast<float>(2.0 * WAVLIB_PI * i) / static_cast<float>(window_length + offset)))));
+            }
+            return true;
+        }
+
+        static bool Hamming(COMPLEX_VEC& out, const int window_length, const bool periodic=true, const float alpha=0.54, const float beta=0.46) {
+            if (window_length < 1) {
+                return false;
+            }
+            if (out.size() < window_length) {
+                out.resize(window_length);
+            }
+            if (window_length == 1) {
+                out[out.size() - 1].real(1);
+                return true;
+            }
+            int offset = 0;
+            if (!periodic) {
+                offset = -1;
+            }
+            for (int i = 0; i < window_length; i++) {
+                out[i].real(alpha - beta * cosf(static_cast<float>(2.0 * WAVLIB_PI * i) / static_cast<float>(window_length + offset)));
+            }
+            return true;
+        }
+
+        static bool Kaiser(COMPLEX_VEC& out, const int window_length, const bool periodic=true, const float beta=12.0) {
+            /** Note: beta = alpha * pi **/
+            if (window_length < 1) {
+                return false;
+            }
+            if (out.size() < window_length) {
+                out.resize(window_length);
+            }
+            if (window_length == 1) {
+                out[out.size() - 1].real(1);
+                return true;
+            }
+            int offset = 0;
+            if (!periodic) {
+                offset = -1;
+            }
+            for (int i = 0; i < window_length; i++) {
+                out[i].real(std::cyl_bessel_if(0, beta * sqrtf(static_cast<float>(1.0) - powf(static_cast<float>((i - (window_length + offset) / 2.0) / ((window_length + offset) / 2.0)), 2.0))) / std::cyl_bessel_if(0, beta));
+            }
+            return true;
+        }
+
+        static bool Blackman(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            if (window_length < 1) {
+                return false;
+            }
+            if (out.size() < window_length) {
+                out.resize(window_length);
+            }
+            if (window_length == 1) {
+                out[out.size() - 1].real(1);
+                return true;
+            }
+            int offset = 0;
+            if (!periodic) {
+                offset = -1;
+            }
+            for (int i = 0; i < window_length; i++) {
+                out[i].real(static_cast<float>(0.42 - 0.5 * cosf(static_cast<float>(2.0 * WAVLIB_PI * i) / static_cast<float>(window_length + offset)) + 0.08 * cosf(static_cast<float>(4.0 * WAVLIB_PI * i) / static_cast<float>(window_length + offset))));
+            }
+            return true;
+        }
+
+        static bool Bartlett(COMPLEX_VEC& out, const int window_length, const bool periodic=true) {
+            if (window_length < 1) {
+                return false;
+            }
+            if (out.size() < window_length) {
+                out.resize(window_length);
+            }
+            if (window_length == 1) {
+                out[out.size() - 1].real(1);
+                return true;
+            }
+            int offset = 0;
+            if (!periodic) {
+                offset = -1;
+            }
+            int i = 0;
+            for (; i <= (window_length + offset) / 2; i++) {
+                out[i].real(static_cast<float>(static_cast<float>(2.0 * i) / static_cast<float>(window_length + offset)));
+            }
+            for (; i < (window_length + offset); i++) {
+                out[i].real(static_cast<float>(2.0 - (static_cast<float>(2.0 * i) / static_cast<float>(window_length + offset))));
+            }
             return true;
         }
     };

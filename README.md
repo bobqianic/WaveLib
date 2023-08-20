@@ -13,7 +13,7 @@
 int main() {
     WAVLIB::FORMAT::WAV audio;
     WAVLIB::LOAD(R"(C:\Users\a13.wav)", audio);
-    WAVLIB::print_info(audio);
+    WAVLIB::print(audio);
 }
 ```
 

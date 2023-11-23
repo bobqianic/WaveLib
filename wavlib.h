@@ -81,50 +81,16 @@ public:
     }
 #endif
 
-    static bool print(FORMAT::WAV& audio) {
+    static bool print(const FORMAT::WAV& audio) {
         return OUTPUT::audio_info(audio);
     }
 
-    static bool print(COMPLEX_VEC& vec) {
+    static bool print(const COMPLEX_VEC& vec) {
         return OUTPUT::vector_info(vec);
     }
 
-    static bool print(short value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(int value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(int64_t value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(unsigned short value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(unsigned int value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(uint64_t value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(float value) {
-        std::cout << value << std::endl;
-        return true;
-    }
-
-    static bool print(double value) {
+    template<typename T>
+    static bool print(T value) {
         std::cout << value << std::endl;
         return true;
     }
@@ -244,51 +210,13 @@ private:
     };
 
     struct character {
-        static void short2Char(const short& data, char* out, const bool LittleEndian = true) {
+        /*Convert integer to char array*/
+        template<typename integer>
+        static void int2Char(const integer& data, char* out, const bool LittleEndian = true) {
             const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 2, out);
+            std::copy(p, p + sizeof(decltype(data)), out);
             if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 2);
-            }
-        }
-
-        static void short2Char(const unsigned short& data, char* out, const bool LittleEndian = true) {
-            const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 2, out);
-            if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 2);
-            }
-        }
-
-        static void int2Char(const int& data, char* out, const bool LittleEndian = true) {
-            const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 4, out);
-            if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 4);
-            }
-        }
-
-        static void int2Char(const unsigned int& data, char* out, const bool LittleEndian = true) {
-            const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 4, out);
-            if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 4);
-            }
-        }
-
-        static void longlong2Char(const int64_t& data, char* out, const bool LittleEndian = true) {
-            const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 8, out);
-            if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 8);
-            }
-        }
-
-        static void longlong2Char(const uint64_t& data, char* out, const bool LittleEndian = true) {
-            const char* p = reinterpret_cast<const char*>(&data);
-            std::copy(p, p + 8, out);
-            if (endian::isLittleEndian() != LittleEndian) {
-                endian::flipEndianness(out, 8);
+                endian::flipEndianness(out, sizeof(decltype(data)));
             }
         }
     };
@@ -311,63 +239,14 @@ private:
             return true;
         }
 
-        static bool write(std::ofstream& file, const short& data) {
+        template<typename integer>
+        static bool write(std::ofstream& file, const integer& data) {
             if (!file.is_open()) {
                 return false;
             }
-            char buffer[2];
-            character::short2Char(data, buffer);
-            file.write(buffer, 2);
-            return true;
-        }
-
-        static bool write(std::ofstream& file, const unsigned short& data) {
-            if (!file.is_open()) {
-                return false;
-            }
-            char buffer[2];
-            character::short2Char(data, buffer);
-            file.write(buffer, 2);
-            return true;
-        }
-
-        static bool write(std::ofstream& file, const int& data) {
-            if (!file.is_open()) {
-                return false;
-            }
-            char buffer[4];
+            char buffer[sizeof(decltype(data))];
             character::int2Char(data, buffer);
-            file.write(buffer, 4);
-            return true;
-        }
-
-        static bool write(std::ofstream& file, const unsigned int& data) {
-            if (!file.is_open()) {
-                return false;
-            }
-            char buffer[4];
-            character::int2Char(data, buffer);
-            file.write(buffer, 4);
-            return true;
-        }
-
-        static bool write(std::ofstream& file, const int64_t& data) {
-            if (!file.is_open()) {
-                return false;
-            }
-            char buffer[8];
-            character::longlong2Char(data, buffer);
-            file.write(buffer, 8);
-            return true;
-        }
-
-        static bool write(std::ofstream& file, const uint64_t& data) {
-            if (!file.is_open()) {
-                return false;
-            }
-            char buffer[8];
-            character::longlong2Char(data, buffer);
-            file.write(buffer, 8);
+            file.write(buffer, sizeof(decltype(data)));
             return true;
         }
     };
@@ -521,15 +400,31 @@ private:
 
     struct SIGNAL {
         static bool DFT(const COMPLEX_VEC& in, COMPLEX_VEC& out) {
+            /** Discrete Fourier Transform **/
 
         }
 
         static bool FFT(const COMPLEX_VEC& in, COMPLEX_VEC& out) {
+            /** Fast Fourier Transform **/
 
         }
 
-        static bool STFT() {
+        static bool STFT(COMPLEX_VEC& in,
+                         COMPLEX_VEC& out,
+                         const int frame_size,
+                         const int hop_length,
+                         COMPLEX_VEC& window,
+                         const bool center = true,
+                         const std::string& pad_mode = "reflect",
+                         const bool normalized = false,
+                         const bool onesided = false) {
+            /** Short-Time Fourier Transform **/
             /** Please ensure the window is set to periodic **/
+
+        }
+
+        static bool WT() {
+            /** Wavelet Transform **/
 
         }
     };
@@ -647,7 +542,7 @@ private:
     };
 
     struct OUTPUT {
-        static bool audio_info(FORMAT::WAV& audio) {
+        static bool audio_info(const FORMAT::WAV& audio) {
             if (audio.format == 1) {
                 std::cout << "Type of format: PCM" << std::endl;
             } else {
@@ -661,13 +556,42 @@ private:
             return true;
         }
 
-        static bool vector_info(COMPLEX_VEC& vec) {
+        static bool vector_info(const COMPLEX_VEC& vec) {
             std::cout << "[";
             for (int64_t i = 0; i < vec.size() - 1; i++) {
                 std::cout << vec[i] << ", ";
             }
             std::cout << vec[vec.size() - 1] << "]" << std::endl;
             return true;
+        }
+    };
+
+    struct PADDING {
+        static bool reflection(COMPLEX_VEC& in, COMPLEX_VEC& out, const std::vector<int64_t>& pad) {
+            if (out.size() < in.size() + pad[0] + pad[1]) {
+                out.resize(in.size() + pad[0] + pad[1]);
+            }
+            if (pad[0] > in.size() || pad[1] > in.size()) {
+                return false;
+            }
+            std::reverse_copy(in.begin() + 1, in.begin() + 1 + pad[0], out.begin());
+            std::copy(in.begin(), in.end(), out.begin() + pad[0]);
+            std::reverse_copy(in.end() - 1 - pad[1], in.end() - 1, out.begin() + pad[0] + pad[1] + static_cast<int64_t>(in.size()));
+            return true;
+        }
+
+        static bool constant(COMPLEX_VEC& in, COMPLEX_VEC& out, const std::vector<int64_t>& pad, std::complex<float> value) {
+            if (out.size() < in.size() + pad[0] + pad[1]) {
+                out.resize(in.size() + pad[0] + pad[1]);
+            }
+            std::fill(out.begin(), out.begin() + pad[0], value);
+            std::copy(in.begin(), in.end(), out.begin() + pad[0]);
+            std::fill(out.begin() + pad[0] + static_cast<int64_t>(in.size()), out.begin() + pad[0] + pad[1] + static_cast<int64_t>(in.size()), value);
+            return true;
+        }
+
+        static bool replication(COMPLEX_VEC& in, COMPLEX_VEC& out, const std::vector<int64_t>& pad) {
+            
         }
     };
 

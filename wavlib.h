@@ -11,6 +11,7 @@
 #include <memory>
 #include <complex>
 #include <cmath>
+#include <functional>
 
 #if _WIN32
 #define NOMINMAX
@@ -148,63 +149,113 @@ private:
     };
 
     struct integer {
-        static short char2Short(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[2];
-                std::copy(data, data + 2, buffer);
-                endian::flipEndianness(buffer, 2);
-                return *reinterpret_cast<const short*>(buffer);
+        static int16_t char_2_int16(const char* data, const uint64_t length = 2, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (needSwap || length < 2) {
+                char buffer[2] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (2 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (2 - length), buffer + 2);
+                }
+                return *reinterpret_cast<const int16_t*>(buffer);
             }
-            return *reinterpret_cast<const short*>(data);
+
+            return *reinterpret_cast<const int16_t*>(data);
         }
 
-        static unsigned short char2uShort(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[2];
-                std::copy(data, data + 2, buffer);
-                endian::flipEndianness(buffer, 2);
-                return *reinterpret_cast<const unsigned short*>(buffer);
+        static uint16_t char_2_uint16(const char* data, const uint64_t length = 2, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (needSwap || length < 2) {
+                char buffer[2] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (2 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (2 - length), buffer + 2);
+                }
+                return *reinterpret_cast<const uint16_t*>(buffer);
             }
-            return *reinterpret_cast<const unsigned short*>(data);
+
+            return *reinterpret_cast<const uint16_t*>(data);
         }
 
-        static int char2Int(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[4];
-                std::copy(data, data + 4, buffer);
-                endian::flipEndianness(buffer, 4);
-                return *reinterpret_cast<const int*>(buffer);
+        static int32_t char_2_int32(const char* data, const uint64_t length = 4, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (length == 2) {
+                return static_cast<int32_t>(char_2_int16(data, 2, LittleEndian));
             }
-            return *reinterpret_cast<const int*>(data);
+
+            if (needSwap || length < 4) {
+                char buffer[4] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (4 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (4 - length), buffer + 4);
+                }
+                return *reinterpret_cast<const int32_t*>(buffer);
+            }
+
+            return *reinterpret_cast<const int32_t*>(data);
         }
 
-        static unsigned int char2uInt(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[4];
-                std::copy(data, data + 4, buffer);
-                endian::flipEndianness(buffer, 4);
-                return *reinterpret_cast<const unsigned int*>(buffer);
+        static uint32_t char_2_uint32(const char* data, const uint64_t length = 4, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (length == 2) {
+                return static_cast<uint32_t>(char_2_uint16(data, 2, LittleEndian));
             }
-            return *reinterpret_cast<const unsigned int*>(data);
+
+            if (needSwap || length < 4) {
+                char buffer[4] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (4 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (4 - length), buffer + 4);
+                }
+                return *reinterpret_cast<const uint32_t*>(buffer);
+            }
+
+            return *reinterpret_cast<const uint32_t*>(data);
         }
 
-        static int64_t char2LongLong(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[8];
-                std::copy(data, data + 8, buffer);
-                endian::flipEndianness(buffer, 8);
+        static int64_t char_2_int64(const char* data, const uint64_t length = 8, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (length == 2) {
+                return static_cast<int64_t>(char_2_int16(data, 2, LittleEndian));
+            } else if (length == 4) {
+                return static_cast<int64_t>(char_2_int32(data, 4, LittleEndian));
+            }
+
+            if (needSwap || length < 8) {
+                char buffer[8] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (8 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (8 - length), buffer + 8);
+                }
                 return *reinterpret_cast<const int64_t*>(buffer);
             }
+
             return *reinterpret_cast<const int64_t*>(data);
         }
 
-        static uint64_t char2uLongLong(const char* data, const bool LittleEndian = true) {
-            if (endian::isLittleEndian() != LittleEndian) {
-                char buffer[8];
-                std::copy(data, data + 8, buffer);
-                endian::flipEndianness(buffer, 8);
+        static uint64_t char_2_uint64(const char* data, const uint64_t length = 8, const bool LittleEndian = true) {
+            bool needSwap = endian::isLittleEndian() != LittleEndian;
+
+            if (length == 2) {
+                return static_cast<uint64_t>(char_2_uint16(data, 2, LittleEndian));
+            } else if (length == 4) {
+                return static_cast<uint64_t>(char_2_uint32(data, 4, LittleEndian));
+            }
+
+            if (needSwap || length < 8) {
+                char buffer[8] = {0};
+                std::copy(data, data + length, LittleEndian ? buffer : buffer + (8 - length));
+                if (needSwap && length > 1) {
+                    LittleEndian ? std::reverse(buffer, buffer + length) : std::reverse(buffer + (8 - length), buffer + 8);
+                }
                 return *reinterpret_cast<const uint64_t*>(buffer);
             }
+
             return *reinterpret_cast<const uint64_t*>(data);
         }
     };
@@ -283,21 +334,21 @@ private:
             file.seekg(8, std::ios::cur);
 
             // Read format
-            audio.format = integer::char2Short(DATA::read(file, 2).c_str());
+            audio.format = integer::char_2_int16(DATA::read(file, 2).c_str());
 
             // Read channel
-            audio.channels = integer::char2Short(DATA::read(file, 2).c_str());
+            audio.channels = integer::char_2_int16(DATA::read(file, 2).c_str());
 
             // Read sample rate
-            audio.sample_rate = integer::char2Int(DATA::read(file, 4).c_str());
+            audio.sample_rate = integer::char_2_int32(DATA::read(file, 4).c_str());
 
             // Read data rate
-            audio.data_rate = integer::char2Int(DATA::read(file, 4).c_str());
+            audio.data_rate = integer::char_2_int32(DATA::read(file, 4).c_str());
 
             file.seekg(2, std::ios::cur);
 
             // Read sample size
-            audio.sample_size = integer::char2Short(DATA::read(file, 2).c_str());
+            audio.sample_size = integer::char_2_int16(DATA::read(file, 2).c_str());
             if (audio.sample_size < 8 || audio.sample_size > 32) {
                 return false;
             }
@@ -305,31 +356,24 @@ private:
             // Read data size
             while (!file.eof()) {
                 if (DATA::read(file, 4) == "data") {
-                    audio.data_size = integer::char2Int(DATA::read(file, 4).c_str());
+                    audio.data_size = integer::char_2_int32(DATA::read(file, 4).c_str());
                     break;
                 }
                 file.seekg(-3, std::ios::cur);
             }
 
-            int offset = audio.sample_size / 8;
-            std::unique_ptr<char[]> audio_buffer_main(new char[1024 * 1024 * offset]);
-            std::unique_ptr<char[]> audio_buffer_slave(new char[4]);
-            audio.audio.reserve(audio.data_size / offset);
+            int sample_byte = audio.sample_size / 8;
+            audio.audio.reserve(audio.data_size / sample_byte);
+            std::unique_ptr<char[]> buffer(new char [1024 * 1024 * 4]);
 
-            // read file and convert char[] to vector<int> (supports 8 bits, 16 bits, 24 bits and 32 bits)
-            for (uint64_t i = 0; i < audio.data_size; i += 1024 * 1024 * offset) {
-                unsigned int buffer_size = std::min(static_cast<uint64_t>(1024 * 1024 * offset), static_cast<uint64_t>(audio.data_size) - i);
-                file.read(audio_buffer_main.get(), buffer_size);
-                for (unsigned int j = 0; j < buffer_size; j += offset){
-                    std::copy(audio_buffer_main.get() + j, audio_buffer_main.get() + j + offset, audio_buffer_slave.get());
-                    if ((audio_buffer_slave[offset - 1] & static_cast<char>(-128))) {
-                        std::fill(audio_buffer_slave.get() + offset, audio_buffer_slave.get() + 4, static_cast<char>(-1));
-                    } else {
-                        std::fill(audio_buffer_slave.get() + offset, audio_buffer_slave.get() + 4, static_cast<char>(0));
-                    }
-                    audio.audio.push_back(integer::char2Int(audio_buffer_slave.get()));
+            for (uint64_t i = 0; i < audio.audio.size(); i+= 1024 * 1024 * 4) {
+                file.read(buffer.get(), 1024 * 1024 * 4);
+                std::streamsize bytes_read = file.gcount();
+                for (uint64_t j = 0; j < bytes_read; j+=sample_byte) {
+                    audio.audio.push_back(integer::char_2_int32(buffer.get(), sample_byte));
                 }
             }
+
             return true;
         }
     };
@@ -381,7 +425,7 @@ private:
 
             // write audio data
             int offset = audio.sample_size / 8;
-            std::unique_ptr<char[]> buffer_main(new char [1024 * 1024 * offset]);
+            std::unique_ptr<char[]> buffer_main(new char [1024 * 1024 * 4]);
             std::unique_ptr<char[]> buffer_slave(new char [4]);
 
             for (uint64_t i = 0; i < audio.audio.size(); i+= 1024 * 1024) {
